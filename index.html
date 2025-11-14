@@ -1,0 +1,982 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Collections</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      --bg: #020617;
+      --bg-elevated: #020617;
+      --card-bg: #020617;
+      --accent: #22c55e;
+      --accent-soft: rgba(34,197,94,0.14);
+      --accent-strong: rgba(34,197,94,0.65);
+      --text-main: #e5e7eb;
+      --text-sub: #9ca3af;
+      --border: #1f2937;
+      --danger: #f97316;
+      --badge-bg: rgba(15,23,42,0.85);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--text-main);
+      background:
+        radial-gradient(circle at top, #0f172a 0, #020617 52%),
+        radial-gradient(circle at 130% 130%, #0f172a 0, #020617 52%);
+      position: relative;
+      overflow-x: hidden;
+    }
+
+    /* 背景网格+渐变特效 */
+    body::before {
+      content: "";
+      position: fixed;
+      inset: -40px;
+      background-image:
+        linear-gradient(to right, rgba(31,41,55,0.25) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(31,41,55,0.22) 1px, transparent 1px);
+      background-size: 32px 32px;
+      opacity: 0.6;
+      pointer-events: none;
+      mix-blend-mode: soft-light;
+      z-index: -2;
+    }
+
+    body::after {
+      content: "";
+      position: fixed;
+      width: 360px;
+      height: 360px;
+      right: -60px;
+      top: -120px;
+      background: radial-gradient(circle, rgba(56,189,248,0.28), transparent 60%);
+      filter: blur(2px);
+      pointer-events: none;
+      z-index: -1;
+    }
+
+    /* 漂浮光斑背景 */
+    .bg-orbit {
+      pointer-events: none;
+      position: fixed;
+      inset: 0;
+      overflow: hidden;
+      z-index: -1;
+    }
+
+    .bg-orbit span {
+      position: absolute;
+      width: 280px;
+      height: 280px;
+      border-radius: 999px;
+      filter: blur(40px);
+      opacity: 0.7;
+      mix-blend-mode: screen;
+    }
+
+    .bg-orbit span:nth-child(1) {
+      background: #22c55e;
+      left: -80px;
+      top: 10%;
+      animation: float1 18s ease-in-out infinite;
+    }
+
+    .bg-orbit span:nth-child(2) {
+      background: #38bdf8;
+      right: -60px;
+      top: 40%;
+      animation: float2 22s ease-in-out infinite;
+    }
+
+    .bg-orbit span:nth-child(3) {
+      background: #a855f7;
+      left: 20%;
+      bottom: -120px;
+      animation: float3 26s ease-in-out infinite;
+    }
+
+    @keyframes float1 {
+      0%   { transform: translate3d(0,0,0); }
+      50%  { transform: translate3d(80px,40px,0); }
+      100% { transform: translate3d(0,0,0); }
+    }
+    @keyframes float2 {
+      0%   { transform: translate3d(0,0,0); }
+      50%  { transform: translate3d(-60px,-40px,0); }
+      100% { transform: translate3d(0,0,0); }
+    }
+    @keyframes float3 {
+      0%   { transform: translate3d(0,0,0); }
+      50%  { transform: translate3d(40px,-60px,0); }
+      100% { transform: translate3d(0,0,0); }
+    }
+
+    .page {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 24px 16px 40px;
+    }
+
+    header {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+
+    .header-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    header h1 {
+      margin: 0;
+      font-size: 24px;
+      letter-spacing: 0.2em;
+      font-weight: 600;
+      color: #f9fafb;
+    }
+
+    header p {
+      margin: 4px 0 0;
+      font-size: 13px;
+      color: var(--text-sub);
+    }
+
+    .video-count {
+      font-size: 12px;
+      color: var(--text-sub);
+      opacity: 0.9;
+    }
+
+    /* 搜索 + Filter 工具栏 */
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+      margin-top: 8px;
+      justify-content: space-between;
+    }
+
+    .filters {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .filter-btn {
+      padding: 6px 12px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: rgba(15,23,42,0.8);
+      color: var(--text-sub);
+      font-size: 12px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.18s ease;
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .filter-btn span.dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 999px;
+      background: var(--text-sub);
+    }
+
+    .filter-btn::after {
+      content: "";
+      position: absolute;
+      left: 12px;
+      right: 12px;
+      bottom: 3px;
+      height: 2px;
+      border-radius: 999px;
+      background: linear-gradient(90deg, #22c55e, #38bdf8);
+      transform: scaleX(0);
+      transform-origin: center;
+      transition: transform 0.18s ease;
+    }
+
+    .filter-btn.active {
+      border-color: var(--accent-strong);
+      color: var(--accent);
+      background: var(--accent-soft);
+      box-shadow: 0 0 0 1px rgba(15,23,42,0.9), 0 0 18px rgba(34,197,94,0.25);
+    }
+
+    .filter-btn.active span.dot {
+      background: var(--accent);
+    }
+
+    .filter-btn.active::after {
+      transform: scaleX(1);
+    }
+
+    .search-wrapper {
+      position: relative;
+      min-width: 220px;
+      flex: 1;
+      max-width: 320px;
+    }
+
+    .search-input {
+      width: 100%;
+      padding: 7px 32px 7px 26px;
+      border-radius: 999px;
+      border: 1px solid rgba(31,41,55,0.9);
+      background: radial-gradient(circle at top left, rgba(30,64,175,0.32), rgba(15,23,42,0.96));
+      color: var(--text-main);
+      font-size: 12px;
+      outline: none;
+      box-shadow: 0 0 0 1px rgba(15,23,42,0.9), 0 18px 40px rgba(15,23,42,0.75);
+    }
+
+    .search-input::placeholder {
+      color: #6b7280;
+    }
+
+    .search-icon {
+      position: absolute;
+      left: 9px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 11px;
+      height: 11px;
+      opacity: 0.8;
+    }
+
+    .search-icon svg {
+      width: 100%;
+      height: 100%;
+      fill: #6b7280;
+    }
+
+    /* Grid */
+    .grid {
+      margin-top: 10px;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 16px;
+    }
+
+    @keyframes borderGlow {
+      0%   { border-color: rgba(148,163,184,0.18); box-shadow: 0 0 0 rgba(34,197,94,0); }
+      50%  { border-color: rgba(34,197,94,0.55);   box-shadow: 0 0 24px rgba(34,197,94,0.25); }
+      100% { border-color: rgba(148,163,184,0.18); box-shadow: 0 0 0 rgba(34,197,94,0); }
+    }
+
+    .card {
+      position: relative;
+      border-radius: 14px;
+      background: radial-gradient(circle at top left, #111827 0, #020617 62%);
+      border: 1px solid rgba(148,163,184,0.18);
+      overflow: hidden;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      min-height: 190px;
+      transition:
+        transform 0.2s ease,
+        box-shadow 0.2s ease,
+        border-color 0.18s ease,
+        background 0.22s ease;
+      isolation: isolate;
+      transform-style: preserve-3d;
+    }
+
+    .card::before {
+      content: "";
+      position: absolute;
+      inset: -2px;
+      background: conic-gradient(
+        from 210deg,
+        rgba(56,189,248,0.15),
+        rgba(34,197,94,0.5),
+        rgba(147,51,234,0.2),
+        rgba(56,189,248,0.15)
+      );
+      opacity: 0;
+      transition: opacity 0.22s ease;
+      z-index: -1;
+      pointer-events: none;
+    }
+
+    .card::after {
+      content: "";
+      position: absolute;
+      inset: 20% 10% auto;
+      height: 40%;
+      background: radial-gradient(circle at top, rgba(34,197,94,0.22), transparent 70%);
+      opacity: 0;
+      transition: opacity 0.22s ease;
+      pointer-events: none;
+    }
+
+    .card:hover {
+      transform: translateY(-4px) rotateX(2deg) rotateY(-3deg) translateZ(0);
+      box-shadow:
+        0 22px 60px rgba(15,23,42,0.9),
+        0 0 0 1px rgba(34,197,94,0.45);
+      border-color: rgba(34,197,94,0.42);
+      background: radial-gradient(circle at top left, #111827 0, #020617 72%);
+    }
+
+    .card:hover::before {
+      opacity: 1;
+      animation: borderGlow 2.4s ease-in-out infinite;
+    }
+
+    .card:hover::after {
+      opacity: 1;
+    }
+
+    .card-thumb {
+      position: relative;
+      aspect-ratio: 16 / 9;
+      overflow: hidden;
+      background: linear-gradient(135deg, #047857, #0ea5e9);
+      background-size: cover;
+      background-position: center;
+      border-bottom: 1px solid rgba(15,23,42,0.9);
+    }
+
+    .card-thumb::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background-image:
+        radial-gradient(circle at 0% 0%, rgba(248,250,252,0.28), transparent 55%),
+        radial-gradient(circle at 100% 100%, rgba(59,130,246,0.23), transparent 65%);
+      mix-blend-mode: screen;
+      opacity: 0.75;
+      pointer-events: none;
+    }
+
+    /* 扫光条 */
+    .card-thumb::after {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: -40%;
+      width: 40%;
+      height: 100%;
+      background: linear-gradient(120deg, transparent, rgba(248,250,252,0.4), transparent);
+      transform: translateX(0);
+      opacity: 0;
+    }
+
+    .card:hover .card-thumb::after {
+      opacity: 1;
+      animation: shine 0.9s ease-out 1;
+    }
+
+    @keyframes shine {
+      0% { transform: translateX(0); opacity: 0; }
+      20% { opacity: 1; }
+      100% { transform: translateX(220%); opacity: 0; }
+    }
+
+    .card:hover .card-thumb-inner {
+      transform: scale(1.04);
+    }
+
+    .card-thumb-inner {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: transform 0.22s ease;
+    }
+
+    .play-icon {
+      width: 46px;
+      height: 46px;
+      border-radius: 50%;
+      background: rgba(15,23,42,0.86);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 0 0 1px rgba(148,163,184,0.5), 0 14px 30px rgba(0,0,0,0.85);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      transform: translateY(2px);
+      animation: pulsePlay 2s ease-in-out infinite;
+    }
+
+    .play-icon svg {
+      width: 18px;
+      height: 18px;
+      fill: var(--accent);
+      transform: translateX(1px);
+    }
+
+    @keyframes pulsePlay {
+      0%, 100% {
+        transform: scale(1) translateY(2px);
+        box-shadow: 0 0 0 0 rgba(34,197,94,0);
+      }
+      50% {
+        transform: scale(1.05) translateY(2px);
+        box-shadow: 0 0 16px 0 rgba(34,197,94,0.45);
+      }
+    }
+
+    .card-type-badge {
+      position: absolute;
+      left: 10px;
+      top: 10px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 11px;
+      background: var(--badge-bg);
+      color: var(--text-sub);
+      border: 1px solid rgba(148,163,184,0.48);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      text-transform: capitalize;
+    }
+
+    .duration-badge {
+      position: absolute;
+      right: 10px;
+      bottom: 8px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 11px;
+      background: rgba(15,23,42,0.92);
+      color: var(--text-main);
+      border: 1px solid rgba(148,163,184,0.55);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+    }
+
+    .card-body {
+      padding: 10px 12px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .card-title {
+      font-size: 14px;
+      font-weight: 500;
+      line-height: 1.4;
+      color: #f9fafb;
+    }
+
+    .card-meta {
+      font-size: 12px;
+      color: var(--text-sub);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .meta-left {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .pill {
+      padding: 2px 8px;
+      border-radius: 999px;
+      border: 1px solid rgba(148,163,184,0.5);
+      font-size: 11px;
+      color: var(--text-sub);
+      background: rgba(15,23,42,0.8);
+    }
+
+    .pill-type {
+      border-color: rgba(56,189,248,0.6);
+      color: #7dd3fc;
+      background: rgba(15,23,42,0.85);
+    }
+
+    .meta-right {
+      font-size: 11px;
+      color: #6b7280;
+      text-align: right;
+    }
+
+    /* 空状态 */
+    .empty-state {
+      grid-column: 1 / -1;
+      padding: 24px 18px;
+      border-radius: 16px;
+      border: 1px dashed rgba(55,65,81,0.85);
+      background: radial-gradient(circle at top left, rgba(31,41,55,0.85), rgba(15,23,42,0.96));
+      text-align: center;
+      font-size: 13px;
+      color: var(--text-sub);
+      display: none;
+    }
+
+    /* Modal */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: radial-gradient(circle at top, rgba(15,23,42,0.96), rgba(3,7,18,0.96));
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 999;
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+    }
+
+    .modal-backdrop.show {
+      display: flex;
+    }
+
+    .modal {
+      width: min(960px, 94vw);
+      background: #020617;
+      border-radius: 14px;
+      border: 1px solid rgba(148,163,184,0.4);
+      box-shadow:
+        0 26px 80px rgba(0,0,0,0.95),
+        0 0 0 1px rgba(15,23,42,1);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      isolation: isolate;
+    }
+
+    /* 弹出时动画 */
+    .modal-backdrop.show .modal {
+      animation: modalIn 0.22s ease-out;
+    }
+
+    @keyframes modalIn {
+      0% {
+        opacity: 0;
+        transform: translateY(8px) scale(0.96);
+      }
+      100% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+
+    .modal::before {
+      content: "";
+      position: absolute;
+      inset: -2px;
+      background: conic-gradient(
+        from 200deg,
+        rgba(56,189,248,0.2),
+        rgba(34,197,94,0.5),
+        rgba(129,140,248,0.28),
+        rgba(56,189,248,0.2)
+      );
+      opacity: 0.45;
+      mix-blend-mode: screen;
+      pointer-events: none;
+      z-index: -1;
+      filter: blur(3px);
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 14px;
+      border-bottom: 1px solid rgba(15,23,42,1);
+      background: linear-gradient(90deg, rgba(15,23,42,0.98), rgba(15,23,42,0.94));
+      position: relative;
+    }
+
+    .modal-header::after {
+      content: "";
+      position: absolute;
+      left: 14px;
+      right: 14px;
+      bottom: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(148,163,184,0.7), transparent);
+      opacity: 0.6;
+    }
+
+    .modal-title {
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    .modal-close {
+      cursor: pointer;
+      font-size: 18px;
+      color: var(--text-sub);
+      border: none;
+      background: transparent;
+      padding: 2px 6px;
+      border-radius: 999px;
+    }
+
+    .modal-close:hover {
+      background: rgba(30,41,59,0.9);
+      color: var(--text-main);
+    }
+
+    .modal-body {
+      padding: 8px 10px 12px;
+    }
+
+    .modal video {
+      width: 100%;
+      max-height: 70vh;
+      border-radius: 10px;
+      background: black;
+    }
+
+    @media (max-width: 768px) {
+      header h1 {
+        font-size: 20px;
+      }
+
+      .header-top {
+        align-items: flex-start;
+      }
+
+      .toolbar {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .search-wrapper {
+        max-width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- 动态光斑背景 -->
+  <div class="bg-orbit">
+    <span></span>
+    <span></span>
+    <span></span>
+  </div>
+
+  <div class="page">
+    <header>
+      <div class="header-top">
+        <div>
+          <h1>COLLECTIONS</h1>
+          <p>Interviews, ads, product demos and more — all in one control center.</p>
+        </div>
+        <div class="video-count" id="videoCount">0 videos</div>
+      </div>
+
+      <div class="toolbar">
+        <div class="filters">
+          <button class="filter-btn active" data-filter="all">
+            <span class="dot"></span> All
+          </button>
+          <button class="filter-btn" data-filter="interview">
+            <span class="dot"></span> Interview
+          </button>
+          <button class="filter-btn" data-filter="product">
+            <span class="dot"></span> Product Demo
+          </button>
+          <button class="filter-btn" data-filter="advertisement">
+            <span class="dot"></span> Advertisement
+          </button>
+        </div>
+
+        <div class="search-wrapper">
+          <div class="search-icon">
+            <svg viewBox="0 0 24 24">
+              <path d="M10 4a6 6 0 0 1 4.472 9.985l3.772 3.772a1 1 0 0 1-1.414 1.414l-3.772-3.772A6 6 0 1 1 10 4zm0 2a4 4 0 1 0 0 8 4 4 0 0 0 0-8z"/>
+            </svg>
+          </div>
+          <input
+            type="text"
+            class="search-input"
+            id="searchInput"
+            placeholder="Search by title..."
+          />
+        </div>
+      </div>
+    </header>
+
+    <main class="grid" id="videoGrid">
+      <!-- 采访视频 -->
+      <article class="card"
+               data-type="interview"
+               data-src="videos/Miao-Interview.mp4"
+               data-thumb="covers/Miao-Interview.jpg"
+               data-title="采访视频">
+        <div class="card-thumb">
+          <span class="card-type-badge">Interview</span>
+          <span class="duration-badge">3:48</span>
+          <div class="card-thumb-inner">
+            <div class="play-icon">
+              <svg viewBox="0 0 24 24">
+                <path d="M8 5v14l11-7z"/>
+              </svg>
+            </div>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="card-title">采访视频</div>
+          <div class="card-meta">
+            <div class="meta-left">
+              <span class="pill pill-type">Interview</span>
+              <span class="pill">DE / EN Subtitles</span>
+            </div>
+            <div class="meta-right">Original story</div>
+          </div>
+        </div>
+      </article>
+
+      <!-- 宣传视频 / Product Demo -->
+      <article class="card"
+               data-type="product"
+               data-src="videos/宣传视频.mp4"
+               data-thumb="covers/宣传视频.jpg"
+               data-title="宣传视频">
+        <div class="card-thumb">
+          <span class="card-type-badge">Product</span>
+          <span class="duration-badge">1:01</span>
+          <div class="card-thumb-inner">
+            <div class="play-icon">
+              <svg viewBox="0 0 24 24">
+                <path d="M8 5v14l11-7z"/>
+              </svg>
+            </div>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="card-title">宣传视频</div>
+          <div class="card-meta">
+            <div class="meta-left">
+              <span class="pill pill-type">Product Demo</span>
+              <span class="pill">Overview</span>
+            </div>
+            <div class="meta-right">Highlight cut</div>
+          </div>
+        </div>
+      </article>
+
+      <!-- 教学 / 采访案例 -->
+      <article class="card"
+               data-type="interview"
+               data-src="videos/采访视频.mp4"
+               data-thumb="covers/采访视频.jpg"
+               data-title="采访视频案例">
+        <div class="card-thumb">
+          <span class="card-type-badge">Interview</span>
+          <span class="duration-badge">3:48</span>
+          <div class="card-thumb-inner">
+            <div class="play-icon">
+              <svg viewBox="0 0 24 24">
+                <path d="M8 5v14l11-7z"/>
+              </svg>
+            </div>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="card-title">采访视频案例</div>
+          <div class="card-meta">
+            <div class="meta-left">
+              <span class="pill pill-type">Interview</span>
+              <span class="pill">How-to</span>
+            </div>
+            <div class="meta-right">Case study</div>
+          </div>
+        </div>
+      </article>
+
+      <!-- 广告视频 -->
+      <article class="card"
+               data-type="advertisement"
+               data-src="videos/广告视频.mp4"
+               data-thumb="covers/广告视频.jpg"
+               data-title="广告视频案例">
+        <div class="card-thumb">
+          <span class="card-type-badge">Advertisement</span>
+          <span class="duration-badge">0:37</span>
+          <div class="card-thumb-inner">
+            <div class="play-icon">
+              <svg viewBox="0 0 24 24">
+                <path d="M8 5v14l11-7z"/>
+              </svg>
+            </div>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="card-title">广告视频案例</div>
+          <div class="card-meta">
+            <div class="meta-left">
+              <span class="pill pill-type">Ad</span>
+              <span class="pill">Spot</span>
+            </div>
+            <div class="meta-right">37s TVC</div>
+          </div>
+        </div>
+      </article>
+
+      <!-- 空状态占位 -->
+      <div class="empty-state" id="emptyState">
+        No videos match your current filter. Try switching category or clearing the search.
+      </div>
+    </main>
+  </div>
+
+  <!-- Modal 播放器 -->
+  <div class="modal-backdrop" id="videoModalBackdrop">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="modal-title" id="modalTitle">Video title</div>
+        <button class="modal-close" id="modalCloseBtn">&times;</button>
+      </div>
+      <div class="modal-body">
+        <video id="modalVideo" controls preload="metadata" poster="">
+          <source id="modalVideoSource" src="" type="video/mp4" />
+          Your browser does not support the video tag.
+        </video>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const filterButtons = document.querySelectorAll('.filter-btn');
+    const cards = Array.from(document.querySelectorAll('.card'));
+    const searchInput = document.getElementById('searchInput');
+    const emptyState = document.getElementById('emptyState');
+    const videoCountEl = document.getElementById('videoCount');
+
+    const backdrop = document.getElementById('videoModalBackdrop');
+    const modalVideo = document.getElementById('modalVideo');
+    const modalVideoSource = document.getElementById('modalVideoSource');
+    const modalTitle = document.getElementById('modalTitle');
+    const modalCloseBtn = document.getElementById('modalCloseBtn');
+
+    // 初始缩略图背景 + 点击打开视频
+    cards.forEach(card => {
+      const thumbUrl = card.getAttribute('data-thumb');
+      const thumbEl = card.querySelector('.card-thumb');
+
+      if (thumbEl && thumbUrl) {
+        thumbEl.style.backgroundImage = `url('${thumbUrl}')`;
+      }
+
+      card.addEventListener('click', () => {
+        const src = card.getAttribute('data-src');
+        const title = card.getAttribute('data-title') || 'Video';
+        const poster = thumbUrl;
+        if (src) openModal(src, title, poster);
+      });
+    });
+
+    function updateVideoCount() {
+      const visible = cards.filter(c => c.style.display !== 'none');
+      videoCountEl.textContent = `${visible.length} video${visible.length === 1 ? '' : 's'}`;
+    }
+
+    function applyFilters() {
+      const activeBtn = document.querySelector('.filter-btn.active');
+      const typeFilter = activeBtn ? activeBtn.getAttribute('data-filter') : 'all';
+      const keyword = searchInput.value.trim().toLowerCase();
+
+      let visibleCount = 0;
+
+      cards.forEach(card => {
+        const type = card.getAttribute('data-type');
+        const title = (card.getAttribute('data-title') || '').toLowerCase();
+        const matchType = (typeFilter === 'all' || type === typeFilter);
+        const matchKeyword = !keyword || title.includes(keyword);
+
+        if (matchType && matchKeyword) {
+          card.style.display = '';
+          visibleCount++;
+        } else {
+          card.style.display = 'none';
+        }
+      });
+
+      emptyState.style.display = visibleCount === 0 ? 'block' : 'none';
+      updateVideoCount();
+    }
+
+    // 过滤按钮逻辑
+    filterButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        filterButtons.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        applyFilters();
+      });
+    });
+
+    // 搜索逻辑
+    searchInput.addEventListener('input', () => {
+      applyFilters();
+    });
+
+    // 初始化计数
+    updateVideoCount();
+
+    // Modal 逻辑
+    function openModal(src, title, poster) {
+      modalVideo.pause();
+      modalVideo.currentTime = 0;
+      modalVideoSource.src = src;
+
+      if (poster) {
+        modalVideo.setAttribute('poster', poster);
+      } else {
+        modalVideo.removeAttribute('poster');
+      }
+
+      modalVideo.load();
+      modalTitle.textContent = title;
+      backdrop.classList.add('show');
+
+      modalVideo.play().catch(() => {
+        // 浏览器阻止自动播放时静默忽略
+      });
+    }
+
+    function closeModal() {
+      modalVideo.pause();
+      backdrop.classList.remove('show');
+    }
+
+    modalCloseBtn.addEventListener('click', closeModal);
+
+    backdrop.addEventListener('click', (e) => {
+      if (e.target === backdrop) {
+        closeModal();
+      }
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && backdrop.classList.contains('show')) {
+        closeModal();
+      }
+    });
+  </script>
+</body>
+</html>
